@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crossword Solver</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .puzzle table {
+            margin: 0 auto;
+            border-collapse: collapse;
+        }
+
+        .puzzle td {
+            width: 30px;
+            height: 30px;
+            text-align: center;
+            border: 1px solid #ccc;
+            font-weight: bold;
+            font-size: 20px;
+            color: #333;
+        }
+
+        .clues table {
+            margin: 0 auto;
+            border-collapse: collapse;
+        }
+
+        .clues th,
+        .clues td {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+
+        .solved {
+            background-color: #e0f0d6;
+        }
+
+        .incorrect {
+            background-color: #e0f0d6;
+        }
+
+        .input-form {
+            text-align: center;
+        }
+
+        .input-form input {
+            padding: 8px;
+            margin: 5px;
+            width: 200px;
+            font-size: 16px;
+        }
+
+        .input-form input[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .input-form input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+
+        #result1 {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        #result2 {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        
+        .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgb(0,0,0);
+        background-color: rgba(0,0,0,0.4);
+        padding-top: 60px;
+        }
+
+        .modal-content {
+        background-color: #fefefe;
+        margin: 5% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        }
+
+        .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+        }
+
+    </style>
+
+</head>
+
+<body>
+    <div class="container">
+        <h1>Crossword Solver</h1>
+
+        <div class="puzzle">
+            <h2>Current Puzzle</h2>
+            <table>
+                {% for i in range(game.rows) %}
+                <tr>
+                    {% for j in range(game.cols) %}
+                    <td {% if game.grid[i][j] == '_' %}class="blank"{% elif game.grid[i][j] != game.clues[0].answer[j] %}class="incorrect"{% elif game.grid[i][j] != '_' %}class="solved"{% endif %}>{{ game.grid[i][j] }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+
+        <div id="myModal" class="modal">
+            <div class="modal-content">
+              <span class="close">&times;</span>
+              <p>Congrats! Game Over!</p>
+            </div>
+        </div>
+
+        <div class="clues">
+            <h2>Unsolved Clues</h2>
+            <table>
+                <tr>
+                    <th>#</th>
+                    <th>Direction</th>
+                    <th>Row/Col</th>
+                    <th>Clue</th>
+                </tr>
+                {% for i in range(game.numWords) %}
+                    {% if not game.clues[i].solved %}
+                        <tr>
+                            <td>{{ i+1 }}</td>
+                            <td>{{ game.clues[i].direction }}</td>
+                            <td>{{ game.clues[i].row }} / {{ game.clues[i].col }}</td>
+                            <td>{{ game.clues[i].clue }}</td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+            </table>
+        </div>        
+
+        <div class="input-form">
+            <h2>Solve Clue</h2>
+            <form id="solveClueForm" onsubmit="submitForm(event)">
+                <label for="clueNumber">Clue Number:</label>
+                <input type="number" id="clueNumber" name="clueNumber" required><br><br>
+                <label for="userAnswer">Your Solution:</label>
+                <input type="text" id="userAnswer" name="userAnswer" required><br><br>
+                <input type="submit" value="Submit">
+            </form>
+            <div id="result1"></div>
+            <div id="result2"></div>
+        </div>
+    </div>
+
+    <script>
+        
+        function updateGame(game) {
+            // Update the grid
+            var puzzleTable = document.querySelector('.puzzle table');
+            for (var i = 0; i < game.rows; i++) {
+                for (var j = 0; j < game.cols; j++) {
+                    puzzleTable.rows[i].cells[j].textContent = game.grid[i][j];
+                }
+            }
+
+            // Update the unsolved clues table (if applicable)
+            var cluesTable = document.querySelector('.clues table');
+            for (var i = 0; i < game.clues.length; i++) {
+                if (!game.clues[i].solved) {
+                    cluesTable.rows[i + 1].cells[3].textContent = game.clues[i].clue;
+                }
+            }
+        }
+
+        
+        function submitForm(event) {
+            event.preventDefault();
+            var clueNumber = document.getElementById('clueNumber').value;
+            var userAnswer = document.getElementById('userAnswer').value.toUpperCase();
+            var result1Div = document.getElementById('result1');
+            var result2Div = document.getElementById('result2');
+
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "/check_answer", true);
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === XMLHttpRequest.DONE) {
+                    if (xhr.status === 200) {
+                        var response = JSON.parse(xhr.responseText);
+                        if (response.result === "correct") {
+                            result1Div.innerHTML = "Correct answer";
+                            updateClue(clueNumber);
+                        } else {
+                            var correct_letters = response.correct_letters;
+                            var misplaced_letters = response.misplaced_letters;
+                            if (correct_letters.length > 0) {
+                                result1Div.innerHTML = "Correctly matched letters: " + correct_letters.join(', ');
+                            } else {
+                                result1Div.innerHTML = "No letters are correctly matched";
+                            } 
+                            if (misplaced_letters.length > 0) {
+                                result2Div.innerHTML = "Letters available but wrongly matched: " + misplaced_letters.join(', ');
+                            } 
+                            if (misplaced_letters.length==0) {
+                                result2Ddiv.innerHTML= "No letters are available but wrongly matched";
+                            }
+                        }
+                        checkGameOver(); 
+                    }
+                }
+            };
+            xhr.send("clue_number=" + clueNumber + "&user_answer=" + userAnswer);
+        }
+
+
+        function solveClue(clueNumber, userAnswer) {
+            var index = clueNumber - 1;
+
+            if (game.clues[index].answer == userAnswer) {
+                game.clues[index].solved = true;
+
+                if (game.clues[index].direction == 'H') {
+                    for (var i = 0; i < userAnswer.length; i++) {
+                        game.grid[game.clues[index].row - 1][game.clues[index].col - 1 + i] = userAnswer[i];
+                    }
+                } else if (game.clues[index].direction == 'V') {
+                    for (var i = 0; i < userAnswer.length; i++) {
+                        game.grid[game.clues[index].row - 1 + i][game.clues[index].col - 1] = userAnswer[i];
+                    }
+                }
+
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        function updateClue(clueNumber) {
+            var index = clueNumber - 1;
+            var answerCell = document.getElementById('answer' + index);
+            answerCell.innerHTML = game.clues[index].answer;
+        }
+
+        // Add this script to show the modal when the game is over
+        function checkGameOver() {
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "/check_game_over", true);
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === XMLHttpRequest.DONE) {
+                    if (xhr.status === 200) {
+                        var response = JSON.parse(xhr.responseText);
+                        if (response.game_over) {
+                            alert("Congrats! Game Over!");
+                            location.reload(); // Reload the page after game over
+                        }
+                    }
+                }
+            };
+            xhr.send();
+        }
+
+        document.getElementById('myModal').addEventListener('click', function() {
+            this.style.display = "none";
+        });
+
+    </script>
+
+</body>
+
+</html>

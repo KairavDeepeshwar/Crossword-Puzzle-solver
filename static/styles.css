@@ -1,0 +1,60 @@
+body {
+    font-family: Arial, sans-serif;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    text-align: center;
+}
+
+h1 {
+    margin-bottom: 20px;
+}
+
+input, button {
+    margin: 5px;
+    padding: 5px;
+    font-size: 16px;
+}
+
+button {
+    cursor: pointer;
+}
+
+.puzzle-container {
+    margin: 20px auto;
+    display: flex;
+    flex-wrap: wrap;
+    max-width: 400px;
+    justify-content: center;
+}
+
+.cell {
+    width: 30px;
+    height: 30px;
+    border: 1px solid #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.clues {
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+.clues ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.clues li {
+    margin-bottom: 5px;
+}
+
+.output {
+    font-weight: bold;
+    margin-top: 20px;
+}

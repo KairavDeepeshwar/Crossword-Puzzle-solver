@@ -1,0 +1,21 @@
+4 6 4
+H 1 1 APPLE Red_fruit
+H 2 1 CHAIR Furniture_piece
+V 1 3 GRAPE Small_fruit
+V 1 6 TABLE Furniture_item
+
+5 5 6
+H 1 1 BAA Sheep_sound
+H 3 1 SOLID Neither_liquid_nor_gas
+H 5 3 WIT Humor
+V 1 1 BUS Road_passenger_transport
+V 1 3 ALLOW To_permit
+V 3 5 DOT Point
+
+10 10 6
+H 1 1 SUNSHINE Bright_daylight
+H 3 2 FOREST Dense_wooded_area
+H 5 3 ELEPHANT Large_land_mammal
+V 1 1 OCEAN Vast_water_body
+V 1 3 TIGER Striped_big_cat
+V 3 5 MOUNTAIN Tall_landform
